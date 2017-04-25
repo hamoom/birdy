@@ -10,31 +10,39 @@ local update
 
 local rect
 local touchDirection
-
+local maxX = 180
+local accelX = 5
 
 function update() 
     local vx, vy = rect:getLinearVelocity()
 
     local newVx, newVy = 0,0
     if touchDirection == "left" then 
-        newVx = vx - 10
+        newVx = vx - accelX
         newVy = vy - 10
     elseif touchDirection == "right" then
-        newVx = vx + 10
+        newVx = vx + accelX
         newVy = vy - 10
     end    
 
-    if newVx < -100 then
-        newVx = -100
+    if newVx < -maxX then
+        newVx = -maxX
     end
 
-    if newVx > 100 then
-        newVx = 100
+    if newVx > maxX then
+        newVx = maxX
     end    
+
+    if newVy < -100 then
+        newVy = -100
+    end
 
     if touchDirection then
         rect:setLinearVelocity(newVx, newVy)
     end
+
+    if rect.x > display.contentWidth then rect.x = 0 end
+    if rect.x < 0 then rect.x = display.contentWidth end
 end
 
 function screenTouched(event)
