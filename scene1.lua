@@ -23,7 +23,7 @@ local rect
 local leftId
 local rightId
 local touchDirection
-local maxX = 180
+local maxX = 220
 local maxUp = -350
 local accelX = 7
 
@@ -31,7 +31,7 @@ local platformSpeed = 2.5
 local platformSpeedMax = 5.5
 local platformTimer = 0
 local platformTimerMax = 1
-local platformTimerMin = 0.4
+local platformTimerMin = 0.3
 local platformGroup = display.newGroup()
 local platforms = {}
 
