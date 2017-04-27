@@ -28,9 +28,10 @@ local maxUp = -350
 local accelX = 7
 
 local platformSpeed = 2.5
-local platformSpeedMax = 8
+local platformSpeedMax = 5.5
 local platformTimer = 0
 local platformTimerMax = 1
+local platformTimerMin = 0.4
 local platformGroup = display.newGroup()
 local platforms = {}
 
@@ -115,6 +116,9 @@ function update()
                 platformSpeed = platformSpeed + 0.15
                 if platformSpeed >= platformSpeedMax then platformSpeed = platformSpeedMax end
 
+                platformTimerMax = platformTimerMax - 0.01
+                if platformTimerMax <= platformTimerMin then platformTimerMax = platformTimerMin end
+                
                 score = score + 1
                 scoreText.text = score
                 platform.isVisible = false
