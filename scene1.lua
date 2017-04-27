@@ -12,6 +12,8 @@ local rect
 local touchDirection
 local maxX = 180
 local accelX = 5
+local platformGroup = display.newGroup()
+local platforms = {}
 
 function update() 
     local vx, vy = rect:getLinearVelocity()
@@ -43,6 +45,10 @@ function update()
 
     if rect.x > display.contentWidth then rect.x = 0 end
     if rect.x < 0 then rect.x = display.contentWidth end
+
+    platformGroup.y = platformGroup.y - 1
+
+    if platformGroup.y <= -display.contentHeight then platformGroup.y = display.contentHeight end
 end
 
 function screenTouched(event)
@@ -65,7 +71,6 @@ function scene:create(event)
     )
     rect:setFillColor(1,0,0)
     physics.addBody(rect, "dynamic", {
-   
     })
 
     local floor = display.newRect(
@@ -75,10 +80,14 @@ function scene:create(event)
         display.contentWidth, 
         1
     )
-
     physics.addBody(floor, "static", {
         bounce = 0.0    
     })
+
+    platformGroup.y = display.contentHeight
+    for i=1, 3, 1 do 
+        platforms[#platforms+1] = display.newRect(platformGroup, 100, (i/3)*display.contentHeight, 50, 10)
+    end 
 
 end
 
