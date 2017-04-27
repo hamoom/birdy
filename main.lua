@@ -6,6 +6,7 @@
 
 -- hide the status bar
 display.setStatusBar(display.HiddenStatusBar)
+system.activate("multitouch")
 
 -- require the composer library
 local composer = require("composer")
