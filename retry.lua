@@ -2,6 +2,7 @@
 local composer = require("composer") 
 local scene = composer.newScene()
 local widget = require("widget")
+local m = require("lib.mydata")
 
 local screenW, screenH, halfW = display.contentWidth, display.contentHeight, display.contentWidth*0.5
 
@@ -12,7 +13,7 @@ function scene:show(event)
 
     if (phase == "will") then
     elseif (phase == "did") then
-    	composer.removeScene("scene1")
+    	composer.removeScene("game")
     end
 end
 
@@ -21,11 +22,19 @@ function scene:create(event)
 
 	local function restart()
 		composer.removeScene("retry")
-		composer.gotoScene("scene1", {effect="fade", time=200})
+		composer.gotoScene("game", {effect="fade", time=200})
 	end
 	
-	local restartBtn = widget.newButton({label="Restart", fontSize=50, x=screenW/2, y=screenH/2, onPress=restart })
-	sceneGroup:insert(restartBtn)
+	local yourScore = display.newText({text='Your Score: ' .. m.score, width=screenW, height=40, x=0, y=screenH/2-90, align="center"})
+	yourScore.anchorX, yourScore.anchorY = 0,0
+	sceneGroup:insert(yourScore)
+
+	local bestScore = display.newText({text='Best Score: ' .. m.getBestScore(), width=screenW, height=40, x=0, y=screenH/2-60, align="center"})
+	bestScore.anchorX, bestScore.anchorY = 0,0
+	sceneGroup:insert(bestScore)
+	
+	local restartBtn = widget.newButton({label="Restart", fontSize=50, x=screenW/2, y=screenH/2 + 30, onPress=restart})
+	sceneGroup:insert(restartBtn) 
 end
 
 

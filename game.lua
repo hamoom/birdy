@@ -2,36 +2,50 @@
 local composer = require("composer")
 local scene = composer.newScene()
 local physics = require("physics")
+local h = require("lib.helper")
+local m = require("lib.mydata")
 
 physics.start()
 ---------------------------------------------------------------------------------
 
+-- FUNCTIONS
 local screenTouched
 local update
 local getDeltaTime
 local onCollision
 local gameOver
 
+-- TIME
 local lastUpdate = 0
 local dt = 0
 
+-- GAME STARTED AND ENDED
+local gameStarted = false
 local death = false
-local score = 0
-local scoreText
-local rect
 
+-- TEXT
+local startTextTimer
+local startText
+local scoreText
+
+-- PLAYER
+local rect
+local indicator
+local maxX = 220
+local maxUp = 350
+local accelX = 7
+
+-- TOUCHES
 local leftId
 local rightId
 local touchDirection
-local maxX = 220
-local maxUp = -350
-local accelX = 7
 
+-- PLATFORMS
 local platformSpeed = 2.5
 local platformSpeedMax = 5.5
 local platformTimer = 0
 local platformTimerMax = 1
-local platformTimerMin = 0.3
+local platformTimerMin = 0.40
 local platformGroup = display.newGroup()
 local platforms = {}
 
@@ -51,10 +65,9 @@ end
 function update() 
     getDeltaTime()
 
+    -- PLAYER MOVEMENT
     local vx, vy = rect:getLinearVelocity()
-
     local newVx, newVy = 0,0
-
 
     if touchDirection == "left" and leftId then 
         newVx = vx - accelX
@@ -64,17 +77,8 @@ function update()
         newVy = vy - 50
     end    
 
-    if newVx < -maxX then
-        newVx = -maxX
-    end
-
-    if newVx > maxX then
-        newVx = maxX
-    end    
-
-    if newVy < maxUp then
-        newVy = maxUp
-    end
+    newVx = h.clamp(newVx, -maxX, maxX)
+    newVy = h.clamp(newVy, -maxUp, 10000)
 
     if touchDirection then
         rect:setLinearVelocity(newVx, newVy)
@@ -88,40 +92,62 @@ function update()
         rect.x = display.contentWidth
     end
 
+    rect.y = h.clamp(rect.y, -25, display.contentHeight + rect.height + 100)
+
     if rect.y >= (display.contentHeight + rect.height) then
         gameOver()
     end
 
-    platformTimer = platformTimer - dt
-
-    if platformTimer <= 0 then
-        platformTimer = platformTimerMax
-
-        local platform = platforms[#platforms]
-        platform.isVisible = true
-        platforms[#platforms] = nil
-        table.insert(platforms, 1, platform)
-        platform.x = math.random(platform.width/2, display.contentWidth-(platform.width/2))
-        platform.y = display.contentHeight + (display.contentHeight/2)
-
+    if rect.y < 0 then
+        indicator.isVisible = true
+        scoreText:setFillColor(0.3, 0.3, 0.3)
+    else
+        indicator.isVisible = false
+        scoreText:setFillColor(1, 0, 0)
     end
 
-    for _, platform in pairs(platforms) do
-        if platform.isVisible then
-            platform.y = platform.y - platformSpeed
-            
-            if platform.y <= 0 and platform.isVisible then
+    -- INDICATOR
+    indicator.x = rect.x
 
-                platform.x, platform.y = 10000, 10000
-                platformSpeed = platformSpeed + 0.15
-                if platformSpeed >= platformSpeedMax then platformSpeed = platformSpeedMax end
 
-                platformTimerMax = platformTimerMax - 0.01
-                if platformTimerMax <= platformTimerMin then platformTimerMax = platformTimerMin end
+    -- OBSTACLES
+    if gameStarted then
+        platformTimer = platformTimer - dt
+
+        if platformTimer <= 0 then
+            platformTimer = platformTimerMax
+
+            local platform = platforms[#platforms]
+            platform.isVisible = true
+            platforms[#platforms] = nil
+            table.insert(platforms, 1, platform)
+            platform.x = math.random(platform.width/2, display.contentWidth-(platform.width/2))
+            platform.y = display.contentHeight + (display.contentHeight/2)
+
+        end
+
+        for _, platform in pairs(platforms) do
+            if platform.isVisible then
+                platform.randomSin = platform.randomSin + (platform.randomDir * 0.1)
+                platform.x = platform.x + (math.sin(platform.randomSin) * 0.75)
+                platform.y = platform.y - platformSpeed
                 
-                score = score + 1
-                scoreText.text = score
-                platform.isVisible = false
+                if platform.y <= 0 and platform.isVisible then
+
+                    platform.x, platform.y = 10000, 10000
+                    platformSpeed = platformSpeed + 0.15
+                    if platformSpeed >= platformSpeedMax then platformSpeed = platformSpeedMax end
+
+                    platformTimerMax = platformTimerMax - 0.01
+                    if platformTimerMax <= platformTimerMin then platformTimerMax = platformTimerMin end
+                    
+                    platform.isVisible = false
+
+                    if rect.y > 0 then
+                        m.score = m.score + 1
+                        scoreText.text = m.score
+                    end
+                end
             end
         end
     end
@@ -129,6 +155,14 @@ end
 
 function screenTouched(event)
     if event.phase == "began" or event.phase == "moved" then
+
+        if not gameStarted then
+            gameStarted = true
+            startText.isVisible = false
+            timer.cancel(startTextTimer)
+            rect.gravityScale = 5.0
+        end
+
         if event.x < display.contentCenterX then
             touchDirection = "left" 
             leftId = event.id
@@ -138,6 +172,7 @@ function screenTouched(event)
         end
 
     elseif event.phase == "ended" then
+
         if event.id == leftId then leftId = nil end
         if event.id == rightId then rightId = nil end
         touchDirection = nil
@@ -147,6 +182,7 @@ end
 function gameOver()
     if not death then
         death = true
+        m.setBestScore()        
         composer.gotoScene("retry", {effect="fade", time=100})
     end
 end
@@ -160,9 +196,29 @@ end
 function scene:create(event)
     local sceneGroup = self.view
 
+    -- START TEXT
+    startText = display.newText({
+        text = "TOUCH TO START",
+        x = display.contentCenterX,
+        y = display.contentCenterY,
+        width = display.contentWidth,
+        fontSize = 35,
+        font = native.systemFont,
+        align = "center"
+    })
 
+    startTextTimer = timer.performWithDelay(1000, function()
+        if startText.isVisible then
+            startText.isVisible = false
+        else
+            startText.isVisible = true
+        end    
+    end, 0)
+
+    -- SCORE TEXT
+    m.score = 0
     scoreText = display.newText({
-        text = score,
+        text = m.score,
         x = display.contentCenterX + 15,
         y = 30,
         width = display.contentWidth,
@@ -173,22 +229,24 @@ function scene:create(event)
     sceneGroup:insert(scoreText)
     scoreText:setFillColor(1,0,0)
 
-    rect = display.newRect(
-        sceneGroup, 
-        display.contentCenterX, 
-        display.contentCenterY-100, 
-        20, 
-        20
-    )
+    -- OUT OF BOUNDS INDICATOR
+    indicator = display.newRect(sceneGroup, 0, 0, 5, 10)
+    indicator.isVisible = false
+
+    -- PLAYER
+    rect = display.newRect(sceneGroup, display.contentCenterX, display.contentCenterY-100, 20, 20)
     rect:setFillColor(1,1,0)
     physics.addBody(rect, "dynamic", {})
     rect.collision = onCollision
     rect:addEventListener("collision", rect)  
-    rect.gravityScale = 5.0  
+    rect.gravityScale = 0 
+    rect.isFixedRotation = true
 
-
+    -- PLATFORMS
     for i=1, 12, 1 do 
         local platform = display.newRect(sceneGroup, 10000, 1000, 75, 10)
+        platform.randomSin = math.random(-1, 1)
+        platform.randomDir = h.randomSign()
         physics.addBody(platform, "static")
         platform.isVisible = false
         platforms[#platforms+1] = platform
