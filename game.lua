@@ -110,7 +110,6 @@ function update()
     -- INDICATOR
     indicator.x = rect.x
 
-
     -- OBSTACLES
     if gameStarted then
         platformTimer = platformTimer - dt
