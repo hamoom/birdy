@@ -32,8 +32,9 @@ local scoreText
 local rect
 local indicator
 local maxX = 220
-local maxUp = 350
+local maxUp = 290
 local accelX = 7
+local gravityMax = 3
 
 -- TOUCHES
 local leftId
@@ -41,11 +42,11 @@ local rightId
 local touchDirection
 
 -- PLATFORMS
-local platformSpeed = 2.5
-local platformSpeedMax = 5.5
+local platformSpeed = 0.75
+local platformSpeedMax = 2.75
 local platformTimer = 0
-local platformTimerMax = 1
-local platformTimerMin = 0.40
+local platformTimerMax = 4
+local platformTimerMin = 1.3
 local platformGroup = display.newGroup()
 local platforms = {}
 
@@ -122,14 +123,14 @@ function update()
             platforms[#platforms] = nil
             table.insert(platforms, 1, platform)
             platform.x = math.random(platform.width/2, display.contentWidth-(platform.width/2))
-            platform.y = display.contentHeight + (display.contentHeight/2)
+            platform.y = display.contentHeight + 100
 
         end
 
         for _, platform in pairs(platforms) do
             if platform.isVisible then
-                platform.randomSin = platform.randomSin + (platform.randomDir * 0.1)
-                platform.x = platform.x + (math.sin(platform.randomSin) * 0.75)
+                platform.randomSin = platform.randomSin + (platform.randomDir * 0.055)
+                platform.x = platform.x + (math.sin(platform.randomSin) * 2.5)
                 platform.y = platform.y - platformSpeed
                 
                 if platform.y <= 0 and platform.isVisible then
@@ -138,7 +139,7 @@ function update()
                     platformSpeed = platformSpeed + 0.15
                     if platformSpeed >= platformSpeedMax then platformSpeed = platformSpeedMax end
 
-                    platformTimerMax = platformTimerMax - 0.01
+                    platformTimerMax = platformTimerMax - 0.2
                     if platformTimerMax <= platformTimerMin then platformTimerMax = platformTimerMin end
                     
                     platform.isVisible = false
@@ -160,7 +161,7 @@ function screenTouched(event)
             gameStarted = true
             startText.isVisible = false
             timer.cancel(startTextTimer)
-            rect.gravityScale = 5.0
+            rect.gravityScale = gravityMax
         end
 
         if event.x < display.contentCenterX then
