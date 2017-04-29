@@ -45,7 +45,7 @@ local touchDirection
 local platformSpeed = 0.75
 local platformSpeedMax = 2.75
 local platformTimer = 0
-local platformTimerMax = 4
+local platformTimerMax = 5.3
 local platformTimerMin = 1.3
 local platformGroup = display.newGroup()
 local platforms = {}
